@@ -59,7 +59,9 @@ class Modules:
             text_param_mapped = tf.reshape(text_param_mapped, to_T([N, 1, 1, map_dim]))
 
             print('Shape of text_param_mapped: {}'.format(text_param_mapped.get_shape()))
+            print('Shape of image_feat_mapped: {}'.format(image_feat_mapped.get_shape()))
             eltwise_mult = tf.nn.l2_normalize(image_feat_mapped * text_param_mapped, 3)
+            print('Shape of eltwise_mult: {}'.format(eltwise_mult.get_shape()))
             att_grid = _1x1_conv('conv_eltwise', eltwise_mult, output_dim=1)
             print('Shape of att_grid: {}'.format(att_grid.get_shape()))
 
