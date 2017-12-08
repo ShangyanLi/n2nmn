@@ -1,11 +1,12 @@
 from __future__ import absolute_import, division, print_function
 
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument('--gpu_id', type=int, default=0)
-args = parser.parse_args()
+# import argparse
+# parser = argparse.ArgumentParser()
+# parser.add_argument('--gpu_id', type=int, default=0)
+# args = parser.parse_args()
 
-gpu_id = args.gpu_id  # set GPU id to use
+# gpu_id = args.gpu_id  # set GPU id to use
+gpu_id = 0
 import os; os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
 
 import numpy as np

@@ -15,14 +15,18 @@ class Modules:
     def _slice_image_feat_grid(self, batch_idx):
         # this callable will be wrapped into a td.Function
         # In TF Fold, batch_idx is a [N_batch, 1] tensor
-        return tf.gather(self.image_feat_grid, batch_idx)
+        res = tf.gather(self.image_feat_grid, batch_idx)
+        print('sliced image feat grid dim: {}'.format(res.get_shape()))
+        return res
 
     def _slice_word_vecs(self, time_idx, batch_idx):
         # this callable will be wrapped into a td.Function
         # In TF Fold, batch_idx and time_idx are both [N_batch, 1] tensors
         # time is highest dim in word_vecs
         joint_index = tf.stack([time_idx, batch_idx], axis=1)
-        return tf.gather_nd(self.word_vecs, joint_index)
+        res = tf.gather_nd(self.word_vecs, joint_index)
+        print('sliced word vecs dim: {}'.format(res.get_shape()))
+        return res
 
     # All the layers are wrapped with td.ScopedLayer
     def FindModule(self, time_idx, batch_idx, map_dim=500, scope='FindModule',
@@ -178,7 +182,7 @@ def _1x1_conv(name, bottom, output_dim, reuse=None):
 
         conv_flat = tf.nn.xw_plus_b(bottom_flat, weights, biases)
         conv = tf.reshape(conv_flat, to_T([N, H, W, output_dim]))
-
+    print('conv output shape: {}'.format(conv.get_shape()))
     return conv
 
 # TensorFlow Fold can generate zero-size batch for conv layer
