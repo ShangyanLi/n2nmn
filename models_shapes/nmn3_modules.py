@@ -50,6 +50,7 @@ class Modules:
             D_im = image_feat_grid.get_shape().as_list()[-1]
             D_txt = text_param.get_shape().as_list()[-1]
 
+            print('N: {}\nD_im: {}\nD_txt: {}'.format(N, D_im, D_txt))
             # image_feat_mapped has shape [N, H, W, map_dim]
             image_feat_mapped = _1x1_conv('conv_image', image_feat_grid,
                                           output_dim=map_dim)
@@ -57,8 +58,10 @@ class Modules:
             text_param_mapped = fc('fc_text', text_param, output_dim=map_dim)
             text_param_mapped = tf.reshape(text_param_mapped, to_T([N, 1, 1, map_dim]))
 
+            print('Shape of text_param_mapped: {}'.format(text_param_mapped.get_shape()))
             eltwise_mult = tf.nn.l2_normalize(image_feat_mapped * text_param_mapped, 3)
             att_grid = _1x1_conv('conv_eltwise', eltwise_mult, output_dim=1)
+            print('Shape of att_grid: {}'.format(att_grid.get_shape()))
 
             # TODO
             # Do we need to take exponential over the scores?
