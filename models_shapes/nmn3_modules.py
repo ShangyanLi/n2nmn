@@ -34,9 +34,9 @@ class Modules:
         # In TF Fold, batch_idx and time_idx are both [N_batch, 1] tensors
 
         image_feat_grid = self._slice_image_feat_grid(batch_idx)
-        image_feat_grid = tf.Print(image_feat_grid, [image_feat_grid], message="This is image_feat_grid: ")
+        image_feat_grid = tf.Print(image_feat_grid, [image_feat_grid], message="This is image_feat_grid: ", summarize=100)
         text_param = self._slice_word_vecs(time_idx, batch_idx)
-        text_param = tf.Print(text_param, [text_param], message="This is text_param: ")
+        text_param = tf.Print(text_param, [text_param], message="This is text_param: ", summarize=100)
         # Mapping: image_feat_grid x text_param -> att_grid
         # Input:
         #   image_feat_grid: [N, H, W, D_im]
@@ -69,7 +69,7 @@ class Modules:
             eltwise_mult = tf.nn.l2_normalize(image_feat_mapped * text_param_mapped, 3)
             print('Shape of eltwise_mult: {}'.format(eltwise_mult.get_shape()))
             att_grid = _1x1_conv('conv_eltwise', eltwise_mult, output_dim=1)
-            att_grid = tf.Print(att_grid, [att_grid], message="This is att_grid: ")
+            att_grid = tf.Print(att_grid, [att_grid], message="This is att_grid: ", summarize=100)
             print('Shape of att_grid: {}'.format(att_grid.get_shape()))
 
             # TODO
