@@ -13,10 +13,7 @@ import numpy as np
 import tensorflow as tf
 # Start the session BEFORE importing tensorflow_fold
 # to avoid taking up all GPU memory
-# sess = tf.Session(config=tf.ConfigProto(
-#     gpu_options=tf.GPUOptions(allow_growth=True),
-#     allow_soft_placement=False, log_device_placement=False))
-sess = tf.InteractiveSession(config=tf.ConfigProto(
+sess = tf.Session(config=tf.ConfigProto(
     gpu_options=tf.GPUOptions(allow_growth=True),
     allow_soft_placement=False, log_device_placement=False))
 import json
