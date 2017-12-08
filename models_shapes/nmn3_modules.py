@@ -34,9 +34,9 @@ class Modules:
         # In TF Fold, batch_idx and time_idx are both [N_batch, 1] tensors
 
         image_feat_grid = self._slice_image_feat_grid(batch_idx)
-        image_feat_grid = tf.Print(image_feat_grid, [image_feat_grid], message="This is image_feat_grid: ", summarize=100)
+        image_feat_grid = tf.Print(image_feat_grid, [image_feat_grid.get_shape(), image_feat_grid], message="This is image_feat_grid: ", summarize=100)
         text_param = self._slice_word_vecs(time_idx, batch_idx)
-        text_param = tf.Print(text_param, [text_param], message="This is text_param: ", summarize=100)
+        text_param = tf.Print(text_param, [text_param.get_shape(), text_param], message="This is text_param: ", summarize=100)
         # Mapping: image_feat_grid x text_param -> att_grid
         # Input:
         #   image_feat_grid: [N, H, W, D_im]
@@ -63,21 +63,13 @@ class Modules:
 
             text_param_mapped = fc('fc_text', text_param, output_dim=map_dim)
             text_param_mapped = tf.reshape(text_param_mapped, to_T([N, 1, 1, map_dim]))
-            text_param_mapped = tf.Print(text_param_mapped, [text_param_mapped], message="This is text_param_mapped: ", summarize=100)
-            text_param_mapped_sh = text_param_mapped.get_shape()
-            text_param_mapped_sh = tf.Print(text_param_mapped_sh, [text_param_mapped_sh], message="This is text_param_mapped_sh: ",
-                                         summarize=100)
+            text_param_mapped = tf.Print(text_param_mapped, [text_param_mapped.get_shape(), text_param_mapped], message="This is text_param_mapped: ", summarize=100)
             print('Shape of text_param_mapped: {}'.format(text_param_mapped.get_shape()))
             print('Shape of image_feat_mapped: {}'.format(image_feat_mapped.get_shape()))
             eltwise_mult = tf.nn.l2_normalize(image_feat_mapped * text_param_mapped, 3)
-            eltwise_mult = tf.Print(eltwise_mult, [eltwise_mult], message="This is eltwise_mult: ",
-                                         summarize=100)
-            eltwise_mult_sh = eltwise_mult.get_shape()
-            eltwise_mult_sh = tf.Print(eltwise_mult_sh, [eltwise_mult_sh], message="This is eltwise_mult_sh: ",
-                                    summarize=100)
             print('Shape of eltwise_mult: {}'.format(eltwise_mult.get_shape()))
             att_grid = _1x1_conv('conv_eltwise', eltwise_mult, output_dim=1)
-            att_grid = tf.Print(att_grid, [att_grid], message="This is att_grid: ", summarize=100)
+            att_grid = tf.Print(att_grid, [att_grid.get_shape(), att_grid], message="This is att_grid: ", summarize=100)
             print('Shape of att_grid: {}'.format(att_grid.get_shape()))
 
             # TODO
