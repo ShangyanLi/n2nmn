@@ -123,17 +123,7 @@ use_gt_layout = tf.constant(True, dtype=tf.bool)
 gt_layout_batch = tf.placeholder(tf.int32, [None, None])
 
 # The model
-nmn3_model = NMN3ModelAtt(image_batch, text_seq_batch,
-    seq_length_batch, T_decoder=T_decoder,
-    num_vocab_txt=num_vocab_txt, embed_dim_txt=embed_dim_txt,
-    num_vocab_nmn=num_vocab_nmn, embed_dim_nmn=embed_dim_nmn,
-    lstm_dim=lstm_dim,
-    num_layers=num_layers, EOS_idx=assembler.EOS_idx,
-    encoder_dropout=encoder_dropout,
-    decoder_dropout=decoder_dropout,
-    decoder_sampling=decoder_sampling,
-    num_choices=num_choices, use_gt_layout=use_gt_layout,
-    gt_layout_batch=gt_layout_batch)
+nmn3_model = NMN3ModelAtt(image_batch, text_seq_batch,seq_length_batch, T_decoder=T_decoder,num_vocab_txt=num_vocab_txt, embed_dim_txt=embed_dim_txt,num_vocab_nmn=num_vocab_nmn, embed_dim_nmn=embed_dim_nmn,lstm_dim=lstm_dim,num_layers=num_layers, EOS_idx=assembler.EOS_idx,encoder_dropout=encoder_dropout,decoder_dropout=decoder_dropout,decoder_sampling=decoder_sampling,num_choices=num_choices, use_gt_layout=use_gt_layout,gt_layout_batch=gt_layout_batch)
 
 compiler = nmn3_model.compiler
 scores = nmn3_model.scores
@@ -187,56 +177,57 @@ sess.run(tf.global_variables_initializer())
 avg_accuracy = 0
 accuracy_decay = 0.99
 
-for n_iter in range(max_iter):
-    n_begin = int((n_iter % num_batches)*N)
-    n_end = int(min(n_begin+N, num_questions))
+# for n_iter in range(max_iter):
+n_iter = 0
+n_begin = int((n_iter % num_batches)*N)
+n_end = int(min(n_begin+N, num_questions))
 
-    # set up input and output tensors
-    h = sess.partial_run_setup(
-        [nmn3_model.predicted_tokens, nmn3_model.entropy_reg,
-         scores, avg_sample_loss, train_step],
-        [text_seq_batch, seq_length_batch, image_batch, gt_layout_batch,
-         compiler.loom_input_tensor, vqa_label_batch])
+# set up input and output tensors
+h = sess.partial_run_setup(
+    [nmn3_model.predicted_tokens, nmn3_model.entropy_reg,
+     scores, avg_sample_loss, train_step],
+    [text_seq_batch, seq_length_batch, image_batch, gt_layout_batch,
+     compiler.loom_input_tensor, vqa_label_batch])
 
-    # Part 0 & 1: Run Convnet and generate module layout
-    tokens, entropy_reg_val = sess.partial_run(h,
-        (nmn3_model.predicted_tokens, nmn3_model.entropy_reg),
-        feed_dict={text_seq_batch: text_seq_array[:, n_begin:n_end],
-                   seq_length_batch: seq_length_array[n_begin:n_end],
-                   image_batch: image_array[n_begin:n_end],
-                   gt_layout_batch: gt_layout_array[:, n_begin:n_end]})
-    # Assemble the layout tokens into network structure
-    expr_list, expr_validity_array = assembler.assemble(tokens)
-    # all expr should be valid (since they are ground-truth)
-    assert(np.all(expr_validity_array))
-    labels = vqa_label_array[n_begin:n_end]
-    # Build TensorFlow Fold input for NMN
-    expr_feed = compiler.build_feed_dict(expr_list)
-    expr_feed[vqa_label_batch] = labels
+# Part 0 & 1: Run Convnet and generate module layout
+tokens, entropy_reg_val = sess.partial_run(h,
+    (nmn3_model.predicted_tokens, nmn3_model.entropy_reg),
+    feed_dict={text_seq_batch: text_seq_array[:, n_begin:n_end],
+               seq_length_batch: seq_length_array[n_begin:n_end],
+               image_batch: image_array[n_begin:n_end],
+               gt_layout_batch: gt_layout_array[:, n_begin:n_end]})
+# Assemble the layout tokens into network structure
+expr_list, expr_validity_array = assembler.assemble(tokens)
+# all expr should be valid (since they are ground-truth)
+assert(np.all(expr_validity_array))
+labels = vqa_label_array[n_begin:n_end]
+# Build TensorFlow Fold input for NMN
+expr_feed = compiler.build_feed_dict(expr_list)
+expr_feed[vqa_label_batch] = labels
 
-    # Part 2: Run NMN and learning steps
-    scores_val, avg_sample_loss_val, _ = sess.partial_run(
-        h, (scores, avg_sample_loss, train_step), feed_dict=expr_feed)
+# Part 2: Run NMN and learning steps
+scores_val, avg_sample_loss_val, _ = sess.partial_run(
+    h, (scores, avg_sample_loss, train_step), feed_dict=expr_feed)
 
-    # compute accuracy
-    predictions = np.argmax(scores_val, axis=1)
-    accuracy = np.mean(np.logical_and(expr_validity_array,
-                                      predictions == labels))
-    avg_accuracy += (1-accuracy_decay) * (accuracy-avg_accuracy)
+# compute accuracy
+predictions = np.argmax(scores_val, axis=1)
+accuracy = np.mean(np.logical_and(expr_validity_array,
+                                  predictions == labels))
+avg_accuracy += (1-accuracy_decay) * (accuracy-avg_accuracy)
 
-    # Add to TensorBoard summary
-    if n_iter % log_interval == 0 or (n_iter+1) == max_iter:
-        print("iter = %d\n\tloss = %f, accuracy (cur) = %f, "
-              "accuracy (avg) = %f, entropy = %f" %
-              (n_iter, avg_sample_loss_val, accuracy,
-               avg_accuracy, -entropy_reg_val))
-        summary = sess.run(log_step, {loss_ph: avg_sample_loss_val,
-                                      entropy_ph: -entropy_reg_val,
-                                      accuracy_ph: avg_accuracy})
-        log_writer.add_summary(summary, n_iter)
+# Add to TensorBoard summary
+if n_iter % log_interval == 0 or (n_iter+1) == max_iter:
+    print("iter = %d\n\tloss = %f, accuracy (cur) = %f, "
+          "accuracy (avg) = %f, entropy = %f" %
+          (n_iter, avg_sample_loss_val, accuracy,
+           avg_accuracy, -entropy_reg_val))
+    summary = sess.run(log_step, {loss_ph: avg_sample_loss_val,
+                                  entropy_ph: -entropy_reg_val,
+                                  accuracy_ph: avg_accuracy})
+    log_writer.add_summary(summary, n_iter)
 
-    # Save snapshot
-    if (n_iter+1) % snapshot_interval == 0 or (n_iter+1) == max_iter:
-        snapshot_file = os.path.join(snapshot_dir, "%08d" % (n_iter+1))
-        snapshot_saver.save(sess, snapshot_file, write_meta_graph=False)
-        print('snapshot saved to ' + snapshot_file)
+# Save snapshot
+if (n_iter+1) % snapshot_interval == 0 or (n_iter+1) == max_iter:
+    snapshot_file = os.path.join(snapshot_dir, "%08d" % (n_iter+1))
+    snapshot_saver.save(sess, snapshot_file, write_meta_graph=False)
+    print('snapshot saved to ' + snapshot_file)
