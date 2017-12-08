@@ -80,6 +80,15 @@ class Modules:
             print('Shape of image_feat_mapped: {}'.format(image_feat_mapped.get_shape()))
             eltwise_mult = tf.nn.l2_normalize(image_feat_mapped * text_param_mapped, 3)
             print('Shape of eltwise_mult: {}'.format(eltwise_mult.get_shape()))
+            emshape = tf.shape(eltwise_mult)
+            ems1 = emshape[1]
+            ems1 = tf.Print(ems1, [ems1], message="This is ems1: ")
+            ems2 = emshape[2]
+            ems2 = tf.Print(ems2, [ems2], message="This is ems2: ")
+            ems3 = emshape[3]
+            ems3 = tf.Print(ems3, [ems3], message="This is ems3: ")
+            ems4 = emshape[4]
+            ems4 = tf.Print(ems4, [ems4], message="This is ems4: ")
             att_grid = _1x1_conv('conv_eltwise', eltwise_mult, output_dim=1)
             att_grid_sh = att_grid.get_shape().as_list()
             print('att_grid_sh: ', att_grid_sh)
